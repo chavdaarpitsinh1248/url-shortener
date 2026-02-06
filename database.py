@@ -37,3 +37,33 @@ def save_short_code(url_id, short_code):
     
     conn.commit()
     conn.close()
+    
+    
+
+def get_url_by_code(short_code):
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "SELECT * FROM urls WHERE short_code = ?",
+        (short_code,)
+    )
+    
+    row = cursor.fetchone()
+    conn.close()
+    
+    return row
+
+
+
+def increment_clicks(url_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "UPDATE urls SET clicks = clicks + 1 WHERE id = ?",
+        (url_id,)
+    )
+    
+    conn.commit()
+    conn.close()

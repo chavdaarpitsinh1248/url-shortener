@@ -1,6 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 from models import create_tables
-from database import insert_url, save_short_code
+from database import insert_url, save_short_code, get_url_by_code, increment_clicks
 from shortener import encode_base62
 
 
@@ -33,6 +33,19 @@ def shorten_url():
     short_url = request.host_url + short_code
     
     return jsonify({"short_url": short_url}), 201
+
+
+@app.route("/<short_code>")
+def redirect_url(short_code):
+    url_data = get_url_by_code(short_code)
+    
+    if not url_data:
+        return jsonify({"error": "Short URL not found"}), 404
+    
+    # Increment click count
+    increment_clicks(url_data["id"])
+    
+    return redirect(url_data["original_url"], code=302)
 
 if __name__ == "__main__":
     create_tables()
