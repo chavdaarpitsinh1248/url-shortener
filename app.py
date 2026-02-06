@@ -1,10 +1,15 @@
 from flask import Flask, request, jsonify, redirect
 from models import create_tables
-from database import insert_url, save_short_code, get_url_by_code, increment_clicks
+from database import insert_url, save_short_code, get_url_by_code, get_url_by_original, increment_clicks
 from shortener import encode_base62
+from urllib.parse import urlparse
 
 
 app = Flask(__name__)
+
+def is_valid_url(url: str) -> bool:
+    parsed = urlparse(url)
+    return all([parsed.scheme, parsed.netloc])
 
 
 @app.route("/")
@@ -19,7 +24,16 @@ def shorten_url():
     if not data or "url" not in data:
         return jsonify({"error": "URL is required"}), 400
     
-    original_url = data["url"]
+    original_url = data["url"].strip()
+    
+    if not is_valid_url(original_url):
+        return jsonify({"error": "Invalid URL"}), 400
+    
+    existing = get_url_by_original(original_url)
+    
+    if existing:
+        short_url = request.host_url + existing["short_code"]
+        return jsonify({"short_url": short_url}), 200
     
     # Step 1: Insert URL
     url_id = insert_url(original_url)
@@ -41,6 +55,9 @@ def redirect_url(short_code):
     
     if not url_data:
         return jsonify({"error": "Short URL not found"}), 404
+    
+    if url_data["expires_at"]:
+        return jsonify({"error": "Short URL expired"}), 410
     
     # Increment click count
     increment_clicks(url_data["id"])

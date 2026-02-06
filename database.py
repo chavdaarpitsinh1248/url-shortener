@@ -55,6 +55,20 @@ def get_url_by_code(short_code):
     return row
 
 
+def get_url_by_original(original_url):
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "SELECT * FROM urls WHERE original_url = ?",
+        (original_url,)
+    )
+    
+    row = cursor.fetchone()
+    conn.close()
+    
+    return row
+
 
 def increment_clicks(url_id):
     conn = get_connection()
