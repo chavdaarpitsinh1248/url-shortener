@@ -1,6 +1,9 @@
 import sqlite3
+import os
 
-DB_PATH = "data/urls.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+DB_PATH = os.path.join(DATA_DIR, "urls.db")
 
 
 # --------------------
@@ -9,6 +12,7 @@ DB_PATH = "data/urls.db"
 
 def get_connection():
     """Create and return a SQLite connection."""
+    os.makedirs(DATA_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
