@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect
+from flask import Flask, request, jsonify, redirect, render_template
 from models import create_tables
 from database import insert_url, save_short_code, get_url_by_code, get_url_by_original, increment_clicks
 from shortener import encode_base62
@@ -12,9 +12,28 @@ def is_valid_url(url: str) -> bool:
     return all([parsed.scheme, parsed.netloc])
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return "URL Shortener is Running"
+    short_url = None
+    error = None
+    
+    if request.method == "POST":
+        original_url = request.form.get("url", "").strip()
+        
+        if not is_valid_url(original_url):
+            error = "Please enter a valid URL"
+        else:
+            existing = get_url_by_original(original_url)
+            
+            if existing:
+                short_url = request.host_url + existing["short_code"]
+            else:
+                url_id = insert_url(original_url)
+                short_code = encode_base62(url_id)
+                save_short_code(url_id, short_code)
+                short_url = request.host_url + short_code
+    
+    return render_template("index.html", short_url=short_url, error=error)
 
 
 @app.route("/shorten", methods=["POST"])
